@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sudoku Solver & Visualizer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-brain logo-icon"></i>
+                <h1>SUDOKU <span class="accent-text">AI Visualizer</span></h1>
+            </div>
+            <div class="header-stats">
+                <div class="stat-badge">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span id="diff-badge">Medium</span>
+                </div>
+                <div class="stat-badge">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="timer">00:00</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-layout">
+            <!-- Left Panel: Controls and Settings -->
+            <section class="panel control-panel">
+                <div class="card">
+                    <h2><i class="fa-solid fa-sliders"></i> Game Controls</h2>
+                    
+                    <div class="control-group">
+                        <label for="difficulty-select">Difficulty</label>
+                        <select id="difficulty-select" class="custom-select">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="expert">Expert</option>
+                        </select>
+                    </div>
+
+                    <button id="new-game-btn" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-rotate"></i> New Game
+                    </button>
+                    
+                    <div class="divider"></div>
+
+                    <h2><i class="fa-solid fa-robot"></i> AI Solver Settings</h2>
+                    
+                    <div class="control-group">
+                        <label for="algorithm-select">Algorithm</label>
+                        <select id="algorithm-select" class="custom-select">
+                            <option value="mrv" selected>MRV Heuristic (CSP)</option>
+                            <option value="standard">Standard Backtracking</option>
+                        </select>
+                        <span class="help-text" id="algo-help-text">MRV (Minimum Remaining Values) solves grids up to 100x faster by choosing cells with the fewest legal moves first.</span>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="slider-header">
+                            <label for="speed-slider">Visualization Delay</label>
+                            <span id="speed-value">50ms</span>
+                        </div>
+                        <input type="range" id="speed-slider" min="0" max="500" step="5" value="50" class="custom-slider">
+                    </div>
+
+                    <div class="ai-actions">
+                        <button id="solve-btn" class="btn btn-accent btn-block">
+                            <i class="fa-solid fa-play"></i> Start AI Solve
+                        </button>
+                        <div class="btn-row">
+                            <button id="pause-btn" class="btn btn-secondary" disabled>
+                                <i class="fa-solid fa-pause"></i> Pause
+                            </button>
+                            <button id="stop-btn" class="btn btn-danger" disabled>
+                                <i class="fa-solid fa-stop"></i> Stop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card status-card">
+                    <h3>AI Solve Statistics</h3>
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Steps (Assignments)</span>
+                            <span class="stat-val" id="steps-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">State</span>
+                            <span class="stat-val status-idle" id="solve-state">Idle</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Panel: The Sudoku Board -->
+            <section class="board-panel">
+                <div class="board-wrapper">
+                    <div id="sudoku-board" class="sudoku-board">
+                        <!-- Cells generated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- On-Screen Keyboard / Pad -->
+                <div class="numpad">
+                    <button class="num-btn" data-value="1">1</button>
+                    <button class="num-btn" data-value="2">2</button>
+                    <button class="num-btn" data-value="3">3</button>
+                    <button class="num-btn" data-value="4">4</button>
+                    <button class="num-btn" data-value="5">5</button>
+                    <button class="num-btn" data-value="6">6</button>
+                    <button class="num-btn" data-value="7">7</button>
+                    <button class="num-btn" data-value="8">8</button>
+                    <button class="num-btn" data-value="9">9</button>
+                    <button class="num-btn btn-clear" data-value="clear">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Info and Explanations -->
+            <section class="panel info-panel">
+                <div class="card">
+                    <h2><i class="fa-solid fa-circle-info"></i> How to Play</h2>
+                    <ul class="guide-list">
+                        <li>Fill numbers <strong>1 to 9</strong> in each empty cell.</li>
+                        <li>Each number must appear exactly <strong>once per row</strong>.</li>
+                        <li>Each number must appear exactly <strong>once per column</strong>.</li>
+                        <li>Each number must appear exactly <strong>once per 3x3 block</strong>.</li>
+                        <li>Locked cells (<span class="lock-sample"></span>) cannot be edited.</li>
+                    </ul>
+                    <div class="divider"></div>
+                    <div class="controls-guide">
+                        <h4>Keyboard Shortcuts</h4>
+                        <div class="shortcut-row"><span class="key">Click</span> Select a cell</div>
+                        <div class="shortcut-row"><span class="key">1-9</span> Enter number</div>
+                        <div class="shortcut-row"><span class="key">Backspace</span> / <span class="key">Del</span> Clear cell</div>
+                        <div class="shortcut-row"><span class="key">Arrow Keys</span> Navigate board</div>
+                    </div>
+                </div>
+
+                <div class="card info-card">
+                    <h2><i class="fa-solid fa-graduation-cap"></i> AI Lab Insight</h2>
+                    <div class="accordion-item">
+                        <h4>Constraint Satisfaction Problem</h4>
+                        <p>Sudoku is modeled as a CSP where cells are variables, domains are numbers [1-9], and rules form binary constraints.</p>
+                    </div>
+                    <div class="accordion-item">
+                        <h4>MRV (Minimum Remaining Values) Heuristic</h4>
+                        <p>Instead of iterating row-by-row, MRV selects the cell with the fewest possible valid candidates. This prunes invalid branches early and reduces search time dramatically.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <div id="victory-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <i class="fa-solid fa-circle-check success-icon"></i>
+                    <h2>Board Solved!</h2>
+                </div>
+                <div class="modal-body">
+                    <p id="victory-text">Congratulations! You solved the puzzle in 05:42.</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-close-btn" class="btn btn-primary">Cool!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="solver.js"></script>
+    <script src="generator.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
