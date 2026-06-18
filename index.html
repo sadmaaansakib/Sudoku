@@ -11,7 +11,9 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
 </head>
 <body>
     <div class="glass-bg"></div>
@@ -32,6 +34,21 @@
                 <div class="stat-badge">
                     <i class="fa-solid fa-clock"></i>
                     <span id="timer">00:00</span>
+                </div>
+                <div class="user-menu-wrapper">
+                    <button id="user-profile-btn" class="user-profile-btn">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span id="username-display">Guest</span>
+                        <i class="fa-solid fa-chevron-down caret-icon"></i>
+                    </button>
+                    <div id="user-dropdown" class="user-dropdown">
+                        <button id="view-stats-btn" class="dropdown-item">
+                            <i class="fa-solid fa-chart-simple"></i> View Stats
+                        </button>
+                        <button id="auth-action-btn" class="dropdown-item">
+                            <i class="fa-solid fa-right-to-bracket"></i> Log In
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -179,6 +196,100 @@
                 </div>
                 <div class="modal-footer">
                     <button id="modal-close-btn" class="btn btn-primary">Cool!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Modal -->
+        <div id="auth-modal" class="modal">
+            <div class="modal-content auth-content">
+                <button class="modal-close-x" id="auth-close-btn">&times;</button>
+                <div class="modal-header">
+                    <i class="fa-solid fa-shield-halved auth-icon"></i>
+                    <h2 id="auth-title">Welcome back</h2>
+                    <p id="auth-subtitle">Login to save your puzzle statistics and preferences.</p>
+                </div>
+                <form id="auth-form" class="auth-form">
+                    <div class="input-group">
+                        <label for="auth-username">Username</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="auth-username" required placeholder="Enter username" autocomplete="username">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="auth-password">Password</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="auth-password" required placeholder="Enter password" autocomplete="current-password">
+                        </div>
+                    </div>
+                    <div id="auth-error" class="auth-error-msg hidden">Invalid username or password.</div>
+                    <button type="submit" id="auth-submit-btn" class="btn btn-accent btn-block">Log In</button>
+                </form>
+                <div class="auth-toggle">
+                    <span id="auth-toggle-text">Don't have an account?</span>
+                    <button id="auth-toggle-btn" class="text-link">Sign Up</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Modal -->
+        <div id="stats-modal" class="modal">
+            <div class="modal-content stats-content">
+                <button class="modal-close-x" id="stats-close-btn">&times;</button>
+                <div class="modal-header">
+                    <i class="fa-solid fa-trophy stats-icon"></i>
+                    <h2>Personal Statistics</h2>
+                    <p>Track your Sudoku progress and records</p>
+                </div>
+                <div class="stats-summary-grid">
+                    <div class="summary-card">
+                        <span class="summary-label">Played</span>
+                        <span class="summary-value" id="stats-played">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Solved</span>
+                        <span class="summary-value" id="stats-solved">0</span>
+                    </div>
+                    <div class="summary-card">
+                        <span class="summary-label">Win Rate</span>
+                        <span class="summary-value" id="stats-winrate">0%</span>
+                    </div>
+                </div>
+                <div class="stats-table-wrapper">
+                    <h3>Fastest Solves</h3>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Difficulty</th>
+                                <th>Best Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Easy</td>
+                                <td id="best-easy">--:--</td>
+                            </tr>
+                            <tr>
+                                <td>Medium</td>
+                                <td id="best-medium">--:--</td>
+                            </tr>
+                            <tr>
+                                <td>Hard</td>
+                                <td id="best-hard">--:--</td>
+                            </tr>
+                            <tr>
+                                <td>Expert</td>
+                                <td id="best-expert">--:--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button id="stats-reset-btn" class="btn btn-danger btn-block">
+                        <i class="fa-solid fa-trash-can"></i> Reset My Stats
+                    </button>
                 </div>
             </div>
         </div>

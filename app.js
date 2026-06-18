@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
         resetTimer();
         startTimer();
 
+        // Track game started for logged-in user
+        trackGameStart();
+
         // Build Board DOM
         buildBoardDOM();
     }
@@ -182,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Victory!
         stopTimer();
+        trackGameSolved(secondsElapsed);
         boardElement.classList.add('board-victory-anim');
         victoryText.innerText = `Congratulations! You solved the puzzle in ${timerElement.innerText}.`;
         victoryModal.classList.add('active');
@@ -428,6 +432,311 @@ document.addEventListener('DOMContentLoaded', () => {
         initGame();
     });
 
-    // Initial game boot
+    // --- Authentication & Stats System ---
+    let currentUser = null; // null if guest, or username string
+    let usersData = JSON.parse(localStorage.getItem('sudoku_users')) || {};
+
+    // Helper: secure password hashing via Web Crypto API (SHA-256)
+    async function hashPassword(password) {
+        const msgUint8 = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function loadUserSession() {
+        const sessionUser = localStorage.getItem('sudoku_current_user');
+        if (sessionUser && usersData[sessionUser.toLowerCase()]) {
+            currentUser = usersData[sessionUser.toLowerCase()].username;
+            updateUserUI();
+        } else {
+            currentUser = null;
+            updateUserUI();
+        }
+    }
+
+    function updateUserUI() {
+        const usernameDisplay = document.getElementById('username-display');
+        const authActionBtn = document.getElementById('auth-action-btn');
+        const userProfileIcon = document.querySelector('#user-profile-btn > i:first-child');
+        
+        if (currentUser) {
+            usernameDisplay.innerText = currentUser;
+            authActionBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Log Out';
+            userProfileIcon.className = 'fa-solid fa-user-check';
+        } else {
+            usernameDisplay.innerText = 'Guest';
+            authActionBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Log In';
+            userProfileIcon.className = 'fa-solid fa-user-circle';
+        }
+    }
+
+    async function registerUser(username, password) {
+        username = username.trim();
+        if (!username || !password) return { success: false, message: 'Invalid fields.' };
+        if (username.toLowerCase() === 'guest') {
+            return { success: false, message: 'Reserved username.' };
+        }
+        if (usersData[username.toLowerCase()]) {
+            return { success: false, message: 'Username already exists.' };
+        }
+        
+        const passwordHash = await hashPassword(password);
+        usersData[username.toLowerCase()] = {
+            username: username, // Preserve casing
+            passwordHash: passwordHash,
+            stats: {
+                played: 0,
+                solved: 0,
+                bestTimes: {
+                    easy: null,
+                    medium: null,
+                    hard: null,
+                    expert: null
+                }
+            }
+        };
+        localStorage.setItem('sudoku_users', JSON.stringify(usersData));
+        return { success: true };
+    }
+
+    async function loginUser(username, password) {
+        username = username.trim().toLowerCase();
+        if (!usersData[username]) {
+            return { success: false, message: 'User does not exist.' };
+        }
+        const passwordHash = await hashPassword(password);
+        if (usersData[username].passwordHash !== passwordHash) {
+            return { success: false, message: 'Incorrect password.' };
+        }
+        
+        currentUser = usersData[username].username;
+        localStorage.setItem('sudoku_current_user', currentUser);
+        updateUserUI();
+        return { success: true };
+    }
+
+    function logoutUser() {
+        currentUser = null;
+        localStorage.removeItem('sudoku_current_user');
+        updateUserUI();
+        // Hide dropdown
+        document.getElementById('user-dropdown').classList.remove('active');
+        document.querySelector('.user-menu-wrapper').classList.remove('active');
+    }
+
+    function trackGameStart() {
+        if (!currentUser) return;
+        const userKey = currentUser.toLowerCase();
+        if (usersData[userKey]) {
+            if (!usersData[userKey].stats) {
+                usersData[userKey].stats = { played: 0, solved: 0, bestTimes: { easy: null, medium: null, hard: null, expert: null } };
+            }
+            usersData[userKey].stats.played++;
+            localStorage.setItem('sudoku_users', JSON.stringify(usersData));
+        }
+    }
+
+    function trackGameSolved(seconds) {
+        if (!currentUser) return;
+        const userKey = currentUser.toLowerCase();
+        if (usersData[userKey]) {
+            if (!usersData[userKey].stats) {
+                usersData[userKey].stats = { played: 0, solved: 0, bestTimes: { easy: null, medium: null, hard: null, expert: null } };
+            }
+            usersData[userKey].stats.solved++;
+            
+            const diff = difficultySelect.value;
+            const currentBest = usersData[userKey].stats.bestTimes[diff];
+            if (currentBest === null || seconds < currentBest) {
+                usersData[userKey].stats.bestTimes[diff] = seconds;
+            }
+            
+            localStorage.setItem('sudoku_users', JSON.stringify(usersData));
+        }
+    }
+
+    // Modal Control Elements
+    const authModal = document.getElementById('auth-modal');
+    const authCloseBtn = document.getElementById('auth-close-btn');
+    const authForm = document.getElementById('auth-form');
+    const authUsernameInput = document.getElementById('auth-username');
+    const authPasswordInput = document.getElementById('auth-password');
+    const authErrorMsg = document.getElementById('auth-error');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const authTitle = document.getElementById('auth-title');
+    const authSubtitle = document.getElementById('auth-subtitle');
+    const authToggleBtn = document.getElementById('auth-toggle-btn');
+    const authToggleText = document.getElementById('auth-toggle-text');
+    
+    let isLoginState = true; 
+
+    function showAuthModal() {
+        isLoginState = true;
+        updateAuthModalState();
+        authUsernameInput.value = '';
+        authPasswordInput.value = '';
+        authErrorMsg.classList.add('hidden');
+        authModal.classList.add('active');
+        // Hide dropdown
+        document.getElementById('user-dropdown').classList.remove('active');
+        document.querySelector('.user-menu-wrapper').classList.remove('active');
+    }
+
+    function updateAuthModalState() {
+        if (isLoginState) {
+            authTitle.innerText = 'Welcome back';
+            authSubtitle.innerText = 'Login to save your puzzle statistics and preferences.';
+            authSubmitBtn.innerText = 'Log In';
+            authToggleText.innerText = "Don't have an account?";
+            authToggleBtn.innerText = 'Sign Up';
+        } else {
+            authTitle.innerText = 'Create Account';
+            authSubtitle.innerText = 'Sign up to track and improve your Sudoku solve times.';
+            authSubmitBtn.innerText = 'Sign Up';
+            authToggleText.innerText = 'Already have an account?';
+            authToggleBtn.innerText = 'Log In';
+        }
+    }
+
+    authToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        isLoginState = !isLoginState;
+        authErrorMsg.classList.add('hidden');
+        updateAuthModalState();
+    });
+
+    authCloseBtn.addEventListener('click', () => {
+        authModal.classList.remove('active');
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = authUsernameInput.value;
+        const password = authPasswordInput.value;
+        
+        authErrorMsg.classList.add('hidden');
+        
+        if (isLoginState) {
+            const result = await loginUser(username, password);
+            if (result.success) {
+                authModal.classList.remove('active');
+                initGame(); // start game under new profile
+            } else {
+                authErrorMsg.innerText = result.message || 'Invalid username or password.';
+                authErrorMsg.classList.remove('hidden');
+            }
+        } else {
+            const result = await registerUser(username, password);
+            if (result.success) {
+                const loginResult = await loginUser(username, password);
+                if (loginResult.success) {
+                    authModal.classList.remove('active');
+                    initGame(); // start game under new profile
+                }
+            } else {
+                authErrorMsg.innerText = result.message || 'Error creating account.';
+                authErrorMsg.classList.remove('hidden');
+            }
+        }
+    });
+
+    // Stats Modal Controls
+    const statsModal = document.getElementById('stats-modal');
+    const statsCloseBtn = document.getElementById('stats-close-btn');
+    const statsResetBtn = document.getElementById('stats-reset-btn');
+
+    function formatTime(seconds) {
+        if (seconds === null || seconds === undefined) return '--:--';
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        return `${mins}:${secs}`;
+    }
+
+    function showStatsModal() {
+        if (!currentUser) {
+            showAuthModal();
+            return;
+        }
+        
+        const userKey = currentUser.toLowerCase();
+        const stats = (usersData[userKey] && usersData[userKey].stats) || {
+            played: 0, solved: 0, bestTimes: { easy: null, medium: null, hard: null, expert: null }
+        };
+
+        document.getElementById('stats-played').innerText = stats.played;
+        document.getElementById('stats-solved').innerText = stats.solved;
+        
+        const winrate = stats.played > 0 ? Math.round((stats.solved / stats.played) * 100) : 0;
+        document.getElementById('stats-winrate').innerText = `${winrate}%`;
+
+        document.getElementById('best-easy').innerText = formatTime(stats.bestTimes.easy);
+        document.getElementById('best-medium').innerText = formatTime(stats.bestTimes.medium);
+        document.getElementById('best-hard').innerText = formatTime(stats.bestTimes.hard);
+        document.getElementById('best-expert').innerText = formatTime(stats.bestTimes.expert);
+
+        statsModal.classList.add('active');
+        // Hide dropdown
+        document.getElementById('user-dropdown').classList.remove('active');
+        document.querySelector('.user-menu-wrapper').classList.remove('active');
+    }
+
+    statsCloseBtn.addEventListener('click', () => {
+        statsModal.classList.remove('active');
+    });
+
+    statsResetBtn.addEventListener('click', () => {
+        if (!currentUser) return;
+        if (confirm('Are you sure you want to reset all your stats? This cannot be undone.')) {
+            const userKey = currentUser.toLowerCase();
+            if (usersData[userKey]) {
+                usersData[userKey].stats = {
+                    played: 0,
+                    solved: 0,
+                    bestTimes: {
+                        easy: null,
+                        medium: null,
+                        hard: null,
+                        expert: null
+                    }
+                };
+                localStorage.setItem('sudoku_users', JSON.stringify(usersData));
+                showStatsModal(); // Refresh stats modal
+            }
+        }
+    });
+
+    // Dropdown toggle hooks
+    const userProfileBtn = document.getElementById('user-profile-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+    const userMenuWrapper = document.querySelector('.user-menu-wrapper');
+    const viewStatsBtn = document.getElementById('view-stats-btn');
+    const authActionBtn = document.getElementById('auth-action-btn');
+
+    userProfileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenuWrapper.classList.toggle('active');
+        userDropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', () => {
+        userMenuWrapper.classList.remove('active');
+        userDropdown.classList.remove('active');
+    });
+
+    viewStatsBtn.addEventListener('click', () => {
+        showStatsModal();
+    });
+
+    authActionBtn.addEventListener('click', () => {
+        if (currentUser) {
+            logoutUser();
+        } else {
+            showAuthModal();
+        }
+    });
+
+    // Initial session check and load
+    loadUserSession();
     initGame();
 });
