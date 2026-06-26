@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
 </head>
@@ -20,7 +20,72 @@
     <div class="glow-orb orb-1"></div>
     <div class="glow-orb orb-2"></div>
 
-    <div class="container">
+    <!-- Entry Screen (Login/Register Gate) -->
+    <div id="entry-screen" class="entry-screen">
+        <div class="entry-card card">
+            <div class="logo entry-logo">
+                <i class="fa-solid fa-brain logo-icon"></i>
+                <h1>SUDOKU <span class="accent-text">AI Visualizer</span></h1>
+            </div>
+            
+            <div class="entry-header">
+                <h2 id="entry-title">Welcome back</h2>
+                <p id="entry-subtitle">Login to solve puzzles and track statistics.</p>
+            </div>
+            
+            <form id="entry-form" class="auth-form">
+                <div class="input-group">
+                    <label for="entry-username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="entry-username" required placeholder="Enter username" autocomplete="username">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="entry-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="entry-password" required placeholder="Enter password" autocomplete="current-password">
+                    </div>
+                </div>
+                <div id="entry-password-strength" class="password-strength-container hidden">
+                    <div class="strength-bar-wrapper">
+                        <div id="entry-strength-bar" class="strength-bar"></div>
+                    </div>
+                    <span id="entry-strength-text" class="strength-text">Password strength: Weak</span>
+                </div>
+                <div id="entry-error" class="auth-error-msg hidden">Invalid username or password.</div>
+                <button type="submit" id="entry-submit-btn" class="btn btn-accent btn-block">Log In</button>
+            </form>
+            
+            <div class="social-login-container">
+                <div class="social-divider">
+                    <span>or continue with</span>
+                </div>
+                <div class="social-buttons">
+                    <button id="entry-google-btn" class="btn btn-social btn-google">
+                        <i class="fa-brands fa-google"></i> Google
+                    </button>
+                    <button id="entry-facebook-btn" class="btn btn-social btn-facebook">
+                        <i class="fa-brands fa-facebook-f"></i> Facebook
+                    </button>
+                </div>
+            </div>
+            
+            <div class="entry-actions">
+                <div class="auth-toggle">
+                    <span id="entry-toggle-text">Don't have an account?</span>
+                    <button id="entry-toggle-btn" class="text-link">Sign Up</button>
+                </div>
+                <div class="divider" style="margin: 4px 0;"></div>
+                <button id="entry-guest-btn" class="btn btn-secondary btn-block">
+                    <i class="fa-solid fa-user-secret"></i> Play as Guest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container hidden">
         <header>
             <div class="logo">
                 <i class="fa-solid fa-brain logo-icon"></i>
@@ -47,6 +112,9 @@
                         </button>
                         <button id="auth-action-btn" class="dropdown-item">
                             <i class="fa-solid fa-right-to-bracket"></i> Log In
+                        </button>
+                        <button id="exit-guest-btn" class="dropdown-item">
+                            <i class="fa-solid fa-right-from-bracket"></i> Exit to Login
                         </button>
                     </div>
                 </div>
@@ -224,9 +292,30 @@
                             <input type="password" id="auth-password" required placeholder="Enter password" autocomplete="current-password">
                         </div>
                     </div>
+                    <div id="auth-password-strength" class="password-strength-container hidden">
+                        <div class="strength-bar-wrapper">
+                            <div id="auth-strength-bar" class="strength-bar"></div>
+                        </div>
+                        <span id="auth-strength-text" class="strength-text">Password strength: Weak</span>
+                    </div>
                     <div id="auth-error" class="auth-error-msg hidden">Invalid username or password.</div>
                     <button type="submit" id="auth-submit-btn" class="btn btn-accent btn-block">Log In</button>
                 </form>
+                
+                <div class="social-login-container">
+                    <div class="social-divider">
+                        <span>or continue with</span>
+                    </div>
+                    <div class="social-buttons">
+                        <button id="auth-google-btn" class="btn btn-social btn-google">
+                            <i class="fa-brands fa-google"></i> Google
+                        </button>
+                        <button id="auth-facebook-btn" class="btn btn-social btn-facebook">
+                            <i class="fa-brands fa-facebook-f"></i> Facebook
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="auth-toggle">
                     <span id="auth-toggle-text">Don't have an account?</span>
                     <button id="auth-toggle-btn" class="text-link">Sign Up</button>
@@ -298,6 +387,29 @@
     <!-- Scripts -->
     <script src="solver.js"></script>
     <script src="generator.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
+
+    <!-- Mock OAuth Overlay Popup -->
+    <div id="mock-oauth-overlay" class="mock-oauth-overlay hidden">
+        <div class="mock-oauth-card">
+            <button class="mock-oauth-close" id="mock-oauth-close-btn">&times;</button>
+            <div class="mock-oauth-header">
+                <div class="mock-oauth-logo" id="mock-oauth-logo">
+                    <i class="fa-brands fa-google"></i>
+                </div>
+                <h3 id="mock-oauth-title">Sign in with Google</h3>
+                <p>to continue to <strong class="accent-text">Sudoku AI Visualizer</strong></p>
+            </div>
+            <div class="mock-oauth-body">
+                <div class="mock-account-list" id="mock-account-list">
+                    <!-- Dynamic Account Pickers -->
+                </div>
+            </div>
+            <div class="mock-oauth-footer">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Safe & Secure simulated OAuth 2.0 sandbox</span>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

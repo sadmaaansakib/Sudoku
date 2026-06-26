@@ -1061,3 +1061,372 @@ header::before {
     color: var(--accent-blue);
 }
 
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Entry Screen Gate */
+.entry-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.85) 0%, #020617 100%);
+    backdrop-filter: blur(8px);
+}
+
+.entry-card {
+    max-width: 420px;
+    width: 100%;
+    animation: modal-zoom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.entry-logo {
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.entry-header {
+    text-align: center;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.entry-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.entry-header p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.entry-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.entry-actions .auth-toggle {
+    text-align: center;
+}
+
+/* Password Strength Indicator */
+.password-strength-container {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.strength-bar-wrapper {
+    background: rgba(255, 255, 255, 0.08);
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.strength-bar {
+    width: 0%;
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+}
+
+.strength-bar.weak {
+    width: 33%;
+    background-color: #ef4444; /* red */
+}
+
+.strength-bar.medium {
+    width: 66%;
+    background-color: #eab308; /* yellow */
+}
+
+.strength-bar.strong {
+    width: 100%;
+    background-color: #22c55e; /* green */
+}
+
+.strength-text {
+    font-size: 0.78rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.strength-text.weak {
+    color: #f87171;
+}
+
+.strength-text.medium {
+    color: #facc15;
+}
+
+.strength-text.strong {
+    color: #4ade80;
+}
+
+/* Social Logins */
+.social-login-container {
+    margin-top: 14px;
+    margin-bottom: 6px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.social-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 8px 0 14px 0;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+}
+
+.social-divider::before,
+.social-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.social-divider:not(:empty)::before {
+    margin-right: 10px;
+}
+
+.social-divider:not(:empty)::after {
+    margin-left: 10px;
+}
+
+.social-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.btn-social {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+}
+
+.btn-google {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.btn-google:hover {
+    background: rgba(234, 67, 53, 0.12);
+    border-color: rgba(234, 67, 53, 0.35);
+    color: #ff8a80;
+    transform: translateY(-1px);
+}
+
+.btn-google i {
+    color: #ea4335;
+    font-size: 0.95rem;
+}
+
+.btn-facebook {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.btn-facebook:hover {
+    background: rgba(24, 119, 242, 0.12);
+    border-color: rgba(24, 119, 242, 0.35);
+    color: #82b1ff;
+    transform: translateY(-1px);
+}
+
+.btn-facebook i {
+    color: #1877f2;
+    font-size: 0.95rem;
+}
+
+/* Mock OAuth Popup Styling */
+.mock-oauth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 6, 17, 0.75);
+    backdrop-filter: blur(12px);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn var(--transition-fast);
+}
+
+.mock-oauth-card {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid var(--border-color-thick);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 380px;
+    padding: 28px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: modal-zoom 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mock-oauth-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.mock-oauth-close:hover {
+    color: var(--text-primary);
+}
+
+.mock-oauth-header {
+    margin-bottom: 20px;
+}
+
+.mock-oauth-logo {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+}
+
+.mock-oauth-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.mock-oauth-header p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.mock-oauth-body {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.mock-account-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.mock-account-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--transition-fast);
+    width: 100%;
+}
+
+.mock-account-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-blue);
+    transform: translateY(-1px);
+}
+
+.mock-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.mock-avatar.google {
+    background: linear-gradient(135deg, #ea4335, #4285f4);
+}
+
+.mock-avatar.facebook {
+    background: #1877f2;
+}
+
+.mock-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.mock-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mock-email {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.mock-oauth-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 14px;
+    width: 100%;
+}
+
+.mock-oauth-footer i {
+    color: #22c55e;
+}
+

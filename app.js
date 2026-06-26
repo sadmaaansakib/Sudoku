@@ -22,6 +22,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const victoryModal = document.getElementById('victory-modal');
     const victoryText = document.getElementById('victory-text');
     const modalCloseBtn = document.getElementById('modal-close-btn');
+    const containerElement = document.querySelector('.container');
+    const entryScreen = document.getElementById('entry-screen');
+    const entryForm = document.getElementById('entry-form');
+    const entryUsernameInput = document.getElementById('entry-username');
+    const entryPasswordInput = document.getElementById('entry-password');
+    const entryErrorMsg = document.getElementById('entry-error');
+    const entrySubmitBtn = document.getElementById('entry-submit-btn');
+    const entryTitle = document.getElementById('entry-title');
+    const entrySubtitle = document.getElementById('entry-subtitle');
+    const entryToggleBtn = document.getElementById('entry-toggle-btn');
+    const entryToggleText = document.getElementById('entry-toggle-text');
+    const entryGuestBtn = document.getElementById('entry-guest-btn');
+    const exitGuestBtn = document.getElementById('exit-guest-btn');
+
+    // Password Strength DOM Elements
+    const entryPasswordStrength = document.getElementById('entry-password-strength');
+    const entryStrengthBar = document.getElementById('entry-strength-bar');
+    const entryStrengthText = document.getElementById('entry-strength-text');
+    const authPasswordStrength = document.getElementById('auth-password-strength');
+    const authStrengthBar = document.getElementById('auth-strength-bar');
+    const authStrengthText = document.getElementById('auth-strength-text');
+
+    // Social Logins DOM Elements
+    const entryGoogleBtn = document.getElementById('entry-google-btn');
+    const entryFacebookBtn = document.getElementById('entry-facebook-btn');
+    const authGoogleBtn = document.getElementById('auth-google-btn');
+    const authFacebookBtn = document.getElementById('auth-facebook-btn');
+
+    // Mock OAuth DOM Elements
+    const mockOAuthOverlay = document.getElementById('mock-oauth-overlay');
+    const mockOAuthCloseBtn = document.getElementById('mock-oauth-close-btn');
+    const mockOAuthLogo = document.getElementById('mock-oauth-logo');
+    const mockOAuthTitle = document.getElementById('mock-oauth-title');
+    const mockAccountList = document.getElementById('mock-account-list');
 
     // Game State Variables
     let initialBoard = []; // 0 means empty
@@ -449,9 +483,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sessionUser && usersData[sessionUser.toLowerCase()]) {
             currentUser = usersData[sessionUser.toLowerCase()].username;
             updateUserUI();
+            containerElement.classList.remove('hidden');
+            entryScreen.classList.add('hidden');
+            initGame();
         } else {
             currentUser = null;
             updateUserUI();
+            containerElement.classList.add('hidden');
+            entryScreen.classList.remove('hidden');
+            stopSolvingProcess();
+            resetTimer();
         }
     }
 
@@ -464,10 +505,12 @@ document.addEventListener('DOMContentLoaded', () => {
             usernameDisplay.innerText = currentUser;
             authActionBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Log Out';
             userProfileIcon.className = 'fa-solid fa-user-check';
+            if (exitGuestBtn) exitGuestBtn.classList.add('hidden');
         } else {
             usernameDisplay.innerText = 'Guest';
             authActionBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Log In';
             userProfileIcon.className = 'fa-solid fa-user-circle';
+            if (exitGuestBtn) exitGuestBtn.classList.remove('hidden');
         }
     }
 
@@ -517,12 +560,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function logoutUser() {
+        stopSolvingProcess();
+        resetTimer();
         currentUser = null;
         localStorage.removeItem('sudoku_current_user');
         updateUserUI();
+        
         // Hide dropdown
         document.getElementById('user-dropdown').classList.remove('active');
         document.querySelector('.user-menu-wrapper').classList.remove('active');
+        
+        // Clean transition back to clean Login form
+        entryUsernameInput.value = '';
+        entryPasswordInput.value = '';
+        entryErrorMsg.classList.add('hidden');
+        isEntryLoginState = true;
+        updateEntryFormState();
+        
+        containerElement.classList.add('hidden');
+        entryScreen.classList.remove('hidden');
     }
 
     function trackGameStart() {
@@ -590,12 +646,15 @@ document.addEventListener('DOMContentLoaded', () => {
             authSubmitBtn.innerText = 'Log In';
             authToggleText.innerText = "Don't have an account?";
             authToggleBtn.innerText = 'Sign Up';
+            authPasswordStrength.classList.add('hidden');
         } else {
             authTitle.innerText = 'Create Account';
             authSubtitle.innerText = 'Sign up to track and improve your Sudoku solve times.';
             authSubmitBtn.innerText = 'Sign Up';
             authToggleText.innerText = 'Already have an account?';
             authToggleBtn.innerText = 'Log In';
+            authPasswordStrength.classList.remove('hidden');
+            updatePasswordStrengthUI(authPasswordInput, authPasswordStrength, authStrengthBar, authStrengthText);
         }
     }
 
@@ -639,6 +698,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 authErrorMsg.classList.remove('hidden');
             }
         }
+    });
+
+    // Entry Screen Event Listeners
+    let isEntryLoginState = true;
+
+    function updateEntryFormState() {
+        if (isEntryLoginState) {
+            entryTitle.innerText = 'Welcome back';
+            entrySubtitle.innerText = 'Login to solve puzzles and track statistics.';
+            entrySubmitBtn.innerText = 'Log In';
+            entryToggleText.innerText = "Don't have an account?";
+            entryToggleBtn.innerText = 'Sign Up';
+            entryPasswordStrength.classList.add('hidden');
+        } else {
+            entryTitle.innerText = 'Create Account';
+            entrySubtitle.innerText = 'Sign up to track and improve your Sudoku solve times.';
+            entrySubmitBtn.innerText = 'Sign Up';
+            entryToggleText.innerText = 'Already have an account?';
+            entryToggleBtn.innerText = 'Log In';
+            entryPasswordStrength.classList.remove('hidden');
+            updatePasswordStrengthUI(entryPasswordInput, entryPasswordStrength, entryStrengthBar, entryStrengthText);
+        }
+    }
+
+    entryToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        isEntryLoginState = !isEntryLoginState;
+        entryErrorMsg.classList.add('hidden');
+        updateEntryFormState();
+    });
+
+    entryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = entryUsernameInput.value;
+        const password = entryPasswordInput.value;
+        
+        entryErrorMsg.classList.add('hidden');
+        
+        if (isEntryLoginState) {
+            const result = await loginUser(username, password);
+            if (result.success) {
+                entryScreen.classList.add('hidden');
+                containerElement.classList.remove('hidden');
+                initGame();
+            } else {
+                entryErrorMsg.innerText = result.message || 'Invalid username or password.';
+                entryErrorMsg.classList.remove('hidden');
+            }
+        } else {
+            const result = await registerUser(username, password);
+            if (result.success) {
+                const loginResult = await loginUser(username, password);
+                if (loginResult.success) {
+                    entryScreen.classList.add('hidden');
+                    containerElement.classList.remove('hidden');
+                    initGame();
+                }
+            } else {
+                entryErrorMsg.innerText = result.message || 'Error creating account.';
+                entryErrorMsg.classList.remove('hidden');
+            }
+        }
+    });
+
+    entryGuestBtn.addEventListener('click', () => {
+        currentUser = null;
+        updateUserUI();
+        entryScreen.classList.add('hidden');
+        containerElement.classList.remove('hidden');
+        initGame();
     });
 
     // Stats Modal Controls
@@ -736,7 +865,198 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    if (exitGuestBtn) {
+        exitGuestBtn.addEventListener('click', () => {
+            stopSolvingProcess();
+            resetTimer();
+            currentUser = null;
+            updateUserUI();
+            
+            // Hide dropdown
+            userMenuWrapper.classList.remove('active');
+            userDropdown.classList.remove('active');
+            
+            // Clean transition back to clean Login form
+            entryUsernameInput.value = '';
+            entryPasswordInput.value = '';
+            entryErrorMsg.classList.add('hidden');
+            isEntryLoginState = true;
+            updateEntryFormState();
+            
+            containerElement.classList.add('hidden');
+            entryScreen.classList.remove('hidden');
+        });
+    }
+
+    // Password Strength Evaluator Logic
+    function checkPasswordStrength(password) {
+        if (!password) return { score: 0, label: 'Weak', className: 'weak' };
+        
+        let score = 0;
+        
+        // 1. Length check
+        if (password.length >= 6) {
+            score++;
+        }
+        if (password.length >= 8) {
+            score++;
+        }
+        
+        // 2. Character variety checks
+        const hasLetters = /[a-zA-Z]/.test(password);
+        const hasNumbers = /[0-9]/.test(password);
+        const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+        
+        if (hasLetters && hasNumbers) {
+            score++;
+        }
+        if (hasSpecial) {
+            score++;
+        }
+        
+        // Map score to weak/medium/strong
+        if (score <= 1) {
+            return { score: 1, label: 'Weak', className: 'weak' };
+        } else if (score <= 3) {
+            return { score: 2, label: 'Medium', className: 'medium' };
+        } else {
+            return { score: 3, label: 'Strong', className: 'strong' };
+        }
+    }
+
+    function updatePasswordStrengthUI(inputEl, strengthContainer, strengthBar, strengthText) {
+        const password = inputEl.value;
+        const result = checkPasswordStrength(password);
+        
+        // Reset classes
+        strengthBar.className = 'strength-bar';
+        strengthText.className = 'strength-text';
+        
+        if (password) {
+            strengthBar.classList.add(result.className);
+            strengthText.classList.add(result.className);
+            strengthText.innerText = `Password strength: ${result.label}`;
+        } else {
+            strengthText.innerText = 'Password strength: Weak';
+        }
+    }
+
+    entryPasswordInput.addEventListener('input', () => {
+        if (!isEntryLoginState) {
+            updatePasswordStrengthUI(entryPasswordInput, entryPasswordStrength, entryStrengthBar, entryStrengthText);
+        }
+    });
+
+    authPasswordInput.addEventListener('input', () => {
+        if (!isLoginState) {
+            updatePasswordStrengthUI(authPasswordInput, authPasswordStrength, authStrengthBar, authStrengthText);
+        }
+    });
+
+    // Mock Social OAuth Flows
+    function openMockOAuth(provider) {
+        mockOAuthOverlay.classList.remove('hidden');
+        mockAccountList.innerHTML = '';
+        
+        if (provider === 'google') {
+            mockOAuthLogo.innerHTML = '<i class="fa-brands fa-google"></i>';
+            mockOAuthLogo.style.color = '#ea4335';
+            mockOAuthTitle.innerText = 'Sign in with Google';
+            
+            const accounts = [
+                { name: 'Sadman Sakib', sub: 'sadmansakib@gmail.com', avatarClass: 'google', initials: 'SS' },
+                { name: 'Guest User', sub: 'guest.sudoku@gmail.com', avatarClass: 'google', initials: 'GU' }
+            ];
+            
+            accounts.forEach(acc => {
+                const item = document.createElement('button');
+                item.className = 'mock-account-item';
+                item.innerHTML = `
+                    <div class="mock-avatar google">${acc.initials}</div>
+                    <div class="mock-info">
+                        <span class="mock-name">${acc.name}</span>
+                        <span class="mock-email">${acc.sub}</span>
+                    </div>
+                `;
+                item.addEventListener('click', () => handleMockLogin(acc.name + ' (Google)', provider));
+                mockAccountList.appendChild(item);
+            });
+        } else {
+            mockOAuthLogo.innerHTML = '<i class="fa-brands fa-facebook-f"></i>';
+            mockOAuthLogo.style.color = '#1877f2';
+            mockOAuthTitle.innerText = 'Log in with Facebook';
+            
+            const accounts = [
+                { name: 'Sadman Sakib', sub: 'Continue as Sadman', avatarClass: 'facebook', initials: 'SS' },
+                { name: 'Guest Player', sub: 'Continue as Guest', avatarClass: 'facebook', initials: 'GP' }
+            ];
+            
+            accounts.forEach(acc => {
+                const item = document.createElement('button');
+                item.className = 'mock-account-item';
+                item.innerHTML = `
+                    <div class="mock-avatar facebook">${acc.initials}</div>
+                    <div class="mock-info">
+                        <span class="mock-name">${acc.name}</span>
+                        <span class="mock-email">${acc.sub}</span>
+                    </div>
+                `;
+                item.addEventListener('click', () => handleMockLogin(acc.name + ' (Facebook)', provider));
+                mockAccountList.appendChild(item);
+            });
+        }
+    }
+
+    async function handleMockLogin(username, provider) {
+        mockAccountList.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; padding:20px 0;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size:2rem; color:var(--accent-blue);"></i>
+                <span style="font-size:0.9rem; color:var(--text-secondary);">Connecting to ${provider === 'google' ? 'Google' : 'Facebook'} secure sandboxed server...</span>
+            </div>
+        `;
+        
+        // Wait 1.2s to simulate secure authentication
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        
+        // Register user silently if not exist
+        const userKey = username.toLowerCase();
+        if (!usersData[userKey]) {
+            usersData[userKey] = {
+                username: username,
+                passwordHash: 'social_login_no_password',
+                stats: {
+                    played: 0,
+                    solved: 0,
+                    bestTimes: { easy: null, medium: null, hard: null, expert: null }
+                }
+            };
+            localStorage.setItem('sudoku_users', JSON.stringify(usersData));
+        }
+        
+        currentUser = usersData[userKey].username;
+        localStorage.setItem('sudoku_current_user', currentUser);
+        updateUserUI();
+        
+        // Hide overlay, modals and show game container
+        mockOAuthOverlay.classList.add('hidden');
+        entryScreen.classList.add('hidden');
+        authModal.classList.remove('active');
+        containerElement.classList.remove('hidden');
+        initGame();
+    }
+
+    if (mockOAuthCloseBtn) {
+        mockOAuthCloseBtn.addEventListener('click', () => {
+            mockOAuthOverlay.classList.add('hidden');
+        });
+    }
+
+    // Social Button click triggers
+    if (entryGoogleBtn) entryGoogleBtn.addEventListener('click', (e) => { e.preventDefault(); openMockOAuth('google'); });
+    if (entryFacebookBtn) entryFacebookBtn.addEventListener('click', (e) => { e.preventDefault(); openMockOAuth('facebook'); });
+    if (authGoogleBtn) authGoogleBtn.addEventListener('click', (e) => { e.preventDefault(); openMockOAuth('google'); });
+    if (authFacebookBtn) authFacebookBtn.addEventListener('click', (e) => { e.preventDefault(); openMockOAuth('facebook'); });
+
     // Initial session check and load
     loadUserSession();
-    initGame();
 });
